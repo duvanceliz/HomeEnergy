@@ -164,6 +164,10 @@ def acomulados():
 def downloadData():      
     return render_template('downloadData.html')
 
+@app.route('/dispositivos',methods=['GET', 'POST'])
+def dispositivos():      
+    return render_template('dispositivos.html')
+
 @app.route('/download',methods=['GET', 'POST'])
 def download():
     data = []
