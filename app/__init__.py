@@ -9,7 +9,7 @@ from itsdangerous import TimedJSONWebSignatureSerializer
 
 app = Flask(__name__)
 
-app.config.from_object("config.DevelopmentConfig")
+app.config.from_object("config.ProductionConfig")
 
 # UPLOAD_FOLDER = os.path.abspath('./static/')
 # app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER

@@ -1,7 +1,8 @@
-from app import app, db, mail, s, login_manager
+from app import app, db, mail, s, login_manager,mqtt
 from flask import render_template, request, session, escape, redirect, url_for, flash, g, send_from_directory,jsonify,send_file,Response,stream_with_context,json
 from flask_login import LoginManager,login_user,logout_user,login_required,current_user,UserMixin
 from app.schemas.users import usuarios
+from app.schemas.dispositivos import dispositivos
 from app.schemas.sensors import sensor1, sensor2, sensor3, sensor4
 from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
@@ -112,6 +113,7 @@ def salir():
     return redirect('/')
 
 @app.route('/acomulados',methods=['GET', 'POST'])
+@login_required
 def acomulados():
 
     wSensor = sensor1.query.order_by(sensor1.fecha.asc()).all()
@@ -161,12 +163,11 @@ def acomulados():
     return render_template('acomulados.html',wSensor20 = wSensor20, name= name, color=color, label=label )
 
 @app.route('/downloadData',methods=['GET', 'POST'])
+@login_required
 def downloadData():      
     return render_template('downloadData.html')
 
-@app.route('/dispositivos',methods=['GET', 'POST'])
-def dispositivos():      
-    return render_template('dispositivos.html')
+
 
 @app.route('/download',methods=['GET', 'POST'])
 def download():
@@ -311,3 +312,51 @@ def datos_monitoreo():
     enviar = _dato()
     return Response(stream_with_context(enviar), mimetype='text/event-stream')
 
+
+@app.route('/dispositivos',methods=['GET', 'POST'])
+@login_required
+def device():  
+
+    deviceQuery = dispositivos.query.all()  
+
+    return render_template('dispositivos.html',deviceQuery=deviceQuery)
+
+@app.route('/agregardispositivo',methods=['GET'])
+@login_required
+def agregardispositivo():
+   return render_template('agregardispositivo.html')
+
+@app.route('/agregardispositivo',methods=['POST'])
+def guardardispositivo():
+    if request.method == 'POST':
+        dispositivo = request.form.get('dispositivo')
+        status = request.form.get('status')
+        newDivice = dispositivos(nombre = dispositivo, status = status)
+        db.session.add(newDivice)
+        db.session.commit()
+        flash('Ha agregado un nuevo dispositivo!','exito')
+
+    return redirect('dispositivos')
+
+@app.route('/devicestatus',methods=['POST'])
+def devicestatus():
+    if request.method == 'POST':
+        id= request.form.get('id')
+        query = dispositivos.query.filter_by(id = id).first() 
+        if query.status:
+            query.status = 0
+            db.session.commit()
+        else:
+            query.status = 1
+            db.session.commit()
+
+        data = { 
+                "deviceName":query.nombre,
+                "id":query.id,
+                "status":query.status
+                }
+        jsonFormat = json.dumps(data)
+        mqtt.publish('notification',jsonFormat)
+ 
+    mensaje = {'exito':'mensaje recibido'}
+    return redirect('dispositivos')
