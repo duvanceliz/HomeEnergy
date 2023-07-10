@@ -92,7 +92,7 @@ def perfil():
 @login_required
 def updateProfile():
     user = current_user
-    
+   
     return render_template('updateProfile.html', user=user)
 
 @app.route('/updateProfile', methods=['POST'])
@@ -302,7 +302,11 @@ def _dato():
     dato3 = sensor3.query.order_by(sensor3.fecha.desc()).first()
     dato4 = sensor4.query.order_by(sensor4.fecha.desc()).first()
     # dict1 = {'dato':dato.dato,'dato2':dato2.dato, 'dato3':dato3.dato,'dato4':dato4.dato,'fecha':dato.fecha.strftime('%H:%M:%S')}
-    dict1 = {'dato':dato.dato,'fecha':dato.fecha.strftime('%H:%M:%S')}
+    if dato != None:
+        dict1 = {'dato':dato.dato,'fecha':dato.fecha.strftime('%H:%M:%S')}
+    else: 
+        dict1 = {'dato':'','fecha':''}
+    
     # dict1 = {'dato':'32','fecha':'25/05/2022'}
     json_data = json.dumps(dict1)
     yield f"data:{json_data}\n\n"
